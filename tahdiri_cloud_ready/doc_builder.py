@@ -4,6 +4,7 @@ import subprocess
 import docx
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
 from docx.enum.section import WD_ORIENT
 from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import nsdecls, qn
@@ -55,6 +56,27 @@ def make_run_rtl(run, font_name="Arial", size_pt=9.5, bold=False, color_rgb=(0,0
         rFonts = OxmlElement('w:rFonts')
         rPr.append(rFonts)
     rFonts.set(qn('w:cs'), font_name)
+
+def populate_cell_paragraphs(cell, text, size_pt=8, align=WD_ALIGN_PARAGRAPH.RIGHT, bold=False):
+    """
+    Splits multi-line text into individual Word paragraphs to guarantee 100% strict alignment
+    on every single line without layout drift or unwanted centering.
+    """
+    lines = [l.strip() for l in (text or '').splitlines() if l.strip()]
+    if not lines:
+        p = cell.paragraphs[0]
+        p.text = ""
+        make_paragraph_rtl(p, align=align)
+        return
+
+    for i, line in enumerate(lines):
+        p = cell.paragraphs[0] if i == 0 else cell.add_paragraph()
+        make_paragraph_rtl(p, align=align)
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(2)
+        p.paragraph_format.line_spacing = 1.05
+        r = p.add_run(line)
+        make_run_rtl(r, font_name="Arial", size_pt=size_pt, bold=bold)
 
 def build_header(doc, emblem_path):
     tbl = doc.add_table(rows=1, cols=3)
@@ -166,8 +188,10 @@ def generate_palestine_lesson_docx(data, output_path, emblem_path="palestine_emb
     sub_tbl.autofit = False
     sub_tblPr = sub_tbl._tbl.tblPr
     sub_tblPr.append(parse_xml(f'<w:bidiVisual {nsdecls("w")}/>'))
+    sub_tblPr.append(parse_xml(f'<w:jc {nsdecls("w")} w:val="center"/>'))
 
-    sub_widths = [Inches(2.7), Inches(2.7), Inches(2.7), Inches(2.7)]
+    # Total width: 10.89 inches (distributed so teacher name has ample space and never wraps)
+    sub_widths = [Inches(2.5), Inches(2.4), Inches(2.5), Inches(3.49)]
     for i, w in enumerate(sub_widths):
         sub_tbl.columns[i].width = w
 
@@ -204,9 +228,9 @@ def generate_palestine_lesson_docx(data, output_path, emblem_path="palestine_emb
     make_paragraph_rtl(p_tch, align=WD_ALIGN_PARAGRAPH.RIGHT)
     p_tch.paragraph_format.space_before = Pt(0)
     p_tch.paragraph_format.space_after = Pt(3)
-    if teacher_val:
-        r_tch = p_tch.add_run(f"المعلم/ـة: {teacher_val}")
-        make_run_rtl(r_tch, font_name="Arial", size_pt=10, bold=True)
+    teacher_label = f"المعلم/ـة: {teacher_val}" if teacher_val else "المعلم/ـة: ...................."
+    r_tch = p_tch.add_run(teacher_label)
+    make_run_rtl(r_tch, font_name="Arial", size_pt=10, bold=True)
 
     # Remove borders from subheader table
     for row in sub_tbl.rows:
@@ -247,9 +271,10 @@ def generate_palestine_lesson_docx(data, output_path, emblem_path="palestine_emb
     tbl = doc.add_table(rows=num_rows, cols=6)
     tbl.autofit = False
 
-    # Force Table visual RTL
+    # Force Table visual RTL & Center on Page
     tblPr = tbl._tbl.tblPr
     tblPr.append(parse_xml(f'<w:bidiVisual {nsdecls("w")}/>'))
+    tblPr.append(parse_xml(f'<w:jc {nsdecls("w")} w:val="center"/>'))
 
     # Header Row
     hdr_cells = tbl.rows[0].cells
@@ -258,6 +283,7 @@ def generate_palestine_lesson_docx(data, output_path, emblem_path="palestine_emb
         set_cell_margins(hdr_cells[i], top=50, bottom=50, left=50, right=50)
         set_cell_background(hdr_cells[i], "EBEFF2")
         set_cell_borders(hdr_cells[i], color="000000", sz="5", val="single")
+        hdr_cells[i].vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
         
         p = hdr_cells[i].paragraphs[0]
         make_paragraph_rtl(p, align=WD_ALIGN_PARAGRAPH.CENTER)
@@ -275,56 +301,27 @@ def generate_palestine_lesson_docx(data, output_path, emblem_path="palestine_emb
             set_cell_margins(row_cells[col_idx], top=40, bottom=40, left=50, right=50)
             set_cell_borders(row_cells[col_idx], color="000000", sz="4", val="single")
         
-        # Col 0: اليوم/التاريخ
-        p0 = row_cells[0].paragraphs[0]
-        make_paragraph_rtl(p0, align=WD_ALIGN_PARAGRAPH.CENTER)
-        p0.paragraph_format.space_after = Pt(0)
-        p0.paragraph_format.space_before = Pt(0)
-        r0 = p0.add_run(lesson.get('day_date', ''))
-        make_run_rtl(r0, font_name="Arial", size_pt=8.5, bold=True)
+        # Col 0: اليوم/التاريخ - توسيط عمودي وأفقي تام
+        row_cells[0].vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+        populate_cell_paragraphs(row_cells[0], lesson.get('day_date', ''), size_pt=8.5, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True)
 
-        # Col 1: عنوان الدرس (Right-aligned)
-        p1 = row_cells[1].paragraphs[0]
-        make_paragraph_rtl(p1, align=WD_ALIGN_PARAGRAPH.RIGHT)
-        p1.paragraph_format.space_after = Pt(0)
-        p1.paragraph_format.space_before = Pt(0)
-        r1 = p1.add_run(lesson.get('title', ''))
-        make_run_rtl(r1, font_name="Arial", size_pt=8.5, bold=True)
+        # Col 1: عنوان الدرس - توسيط عمودي وأفقي تام
+        row_cells[1].vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+        populate_cell_paragraphs(row_cells[1], lesson.get('title', ''), size_pt=8.5, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True)
 
-        # Col 2: نتاج التعلم (Right-aligned)
-        p2 = row_cells[2].paragraphs[0]
-        make_paragraph_rtl(p2, align=WD_ALIGN_PARAGRAPH.RIGHT)
-        p2.paragraph_format.space_after = Pt(1)
-        p2.paragraph_format.space_before = Pt(0)
-        p2.paragraph_format.line_spacing = 1.05
-        r2 = p2.add_run(lesson.get('outcomes', ''))
-        make_run_rtl(r2, font_name="Arial", size_pt=8, bold=False)
+        # Col 2: نتاج التعلم - محاذاة يمين صارمة سطر بسطر
+        populate_cell_paragraphs(row_cells[2], lesson.get('outcomes', ''), size_pt=8, align=WD_ALIGN_PARAGRAPH.RIGHT, bold=False)
 
-        # Col 3: الإجراءات والأنشطة (Right-aligned)
-        p3 = row_cells[3].paragraphs[0]
-        make_paragraph_rtl(p3, align=WD_ALIGN_PARAGRAPH.RIGHT)
-        p3.paragraph_format.space_after = Pt(1)
-        p3.paragraph_format.space_before = Pt(0)
-        p3.paragraph_format.line_spacing = 1.05
-        r3 = p3.add_run(lesson.get('procedures', ''))
-        make_run_rtl(r3, font_name="Arial", size_pt=8, bold=False)
+        # Col 3: الإجراءات والأنشطة - محاذاة يمين صارمة سطر بسطر
+        populate_cell_paragraphs(row_cells[3], lesson.get('procedures', ''), size_pt=8, align=WD_ALIGN_PARAGRAPH.RIGHT, bold=False)
 
-        # Col 4: التقويم (Right-aligned)
-        p4 = row_cells[4].paragraphs[0]
-        make_paragraph_rtl(p4, align=WD_ALIGN_PARAGRAPH.RIGHT)
-        p4.paragraph_format.space_after = Pt(1)
-        p4.paragraph_format.space_before = Pt(0)
-        p4.paragraph_format.line_spacing = 1.05
-        r4 = p4.add_run(lesson.get('assessment', ''))
-        make_run_rtl(r4, font_name="Arial", size_pt=8, bold=False)
+        # Col 4: التقويم - محاذاة يمين صارمة سطر بسطر
+        populate_cell_paragraphs(row_cells[4], lesson.get('assessment', ''), size_pt=8, align=WD_ALIGN_PARAGRAPH.RIGHT, bold=False)
 
-        # Col 5: ملاحظات (فارغة دائماً لملاحظات المعلم اليدوية بالقلم)
+        # Col 5: ملاحظات (فارغة دائماً لملاحظات وتأملات المعلم اليدوية بالقلم)
         p5 = row_cells[5].paragraphs[0]
+        p5.text = ""
         make_paragraph_rtl(p5, align=WD_ALIGN_PARAGRAPH.RIGHT)
-        p5.paragraph_format.space_after = Pt(0)
-        p5.paragraph_format.space_before = Pt(0)
-        r5 = p5.add_run(lesson.get('notes', ''))
-        make_run_rtl(r5, font_name="Arial", size_pt=8, bold=False)
 
     # Save document
     doc.save(output_path)

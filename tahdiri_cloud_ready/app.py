@@ -221,12 +221,25 @@ async def prepare_lesson(
         # Build full lesson plan object
         start_date = date_start or datetime.now().strftime("%Y-%m-%d")
         final_lessons = []
-        for idx, les in enumerate(ai_result.get("lessons", [])):
+        user_title = lesson_title_hint.strip()
+        ai_lessons = ai_result.get("lessons", [])
+        num_lessons = len(ai_lessons)
+
+        for idx, les in enumerate(ai_lessons):
             day_date = format_date_for_period(start_date, idx)
+            # If user provided exact title, enforce it 100% strictly without AI modification
+            if user_title:
+                if num_lessons > 1:
+                    lesson_title = f"{user_title} (حصة {idx+1})"
+                else:
+                    lesson_title = user_title
+            else:
+                lesson_title = les.get("title", "")
+
             final_lessons.append({
                 "period_number": idx + 1,
                 "day_date": day_date,
-                "title": les.get("title", ""),
+                "title": lesson_title,
                 "outcomes": les.get("outcomes", ""),
                 "procedures": les.get("procedures", ""),
                 "assessment": les.get("assessment", ""),
