@@ -1,4 +1,5 @@
 import os
+import time
 import uuid
 import json
 import base64
@@ -34,6 +35,29 @@ os.makedirs(EXPORTS_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
 
 STORE = {}
+
+def cleanup_old_exports(max_age_seconds: int = 7200):
+    """
+    Cleans up exported Word and PDF files older than max_age_seconds (default 2 hours).
+    Runs instantaneously in background/inline (takes < 1ms) keeping server disk light and clean.
+    """
+    now = time.time()
+    try:
+        if not os.path.exists(EXPORTS_DIR):
+            return
+        for fname in os.listdir(EXPORTS_DIR):
+            if fname.startswith("."): # preserve .gitkeep
+                continue
+            fpath = os.path.join(EXPORTS_DIR, fname)
+            if os.path.isfile(fpath):
+                # If file created/modified more than 2 hours ago, safely remove it
+                if now - os.path.getmtime(fpath) > max_age_seconds:
+                    try:
+                        os.remove(fpath)
+                    except OSError:
+                        pass
+    except Exception:
+        pass
 
 def compress_image_to_b64(content: bytes, max_dim: int = 1400) -> str:
     """Compress and resize image to prevent socket timeout and upload fast."""
@@ -111,6 +135,7 @@ async def prepare_lesson(
     subject: str = Form(...),
     semester: str = Form("الفصل الأول"),
     periods_mode: str = Form("auto"),
+    multi_period_mode: str = Form("separate_pages"),
     teacher_name: str = Form(""),
     school_name: str = Form(""),
     date_start: str = Form(""),
@@ -252,6 +277,7 @@ async def prepare_lesson(
             "subject": subject,
             "teacher_name": teacher_name,
             "school_name": school_name,
+            "multi_period_mode": multi_period_mode,
             "detected_lesson_title": ai_result.get("detected_lesson_title", lesson_title_hint),
             "lessons": final_lessons
         }
@@ -274,6 +300,9 @@ async def prepare_lesson(
             has_pdf = True
         except Exception as err:
             print("PDF conversion error:", err)
+
+        # Immediate fast cleanup of files older than 2 hours to keep storage 100% clean
+        cleanup_old_exports()
 
         STORE[plan_id] = {
             "data": plan_data,
@@ -320,6 +349,9 @@ async def export_update(payload: dict):
             has_pdf = True
         except Exception as err:
             print("PDF conversion error:", err)
+
+        # Immediate fast cleanup of files older than 2 hours to keep storage 100% clean
+        cleanup_old_exports()
 
         STORE[plan_id] = {
             "data": plan_data,

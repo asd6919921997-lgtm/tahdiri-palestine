@@ -154,23 +154,7 @@ def build_header(doc, emblem_path):
     )
     p_line._p.get_or_add_pPr().append(pBdr)
 
-def generate_palestine_lesson_docx(data, output_path, emblem_path="palestine_emblem_trans.png"):
-    doc = docx.Document()
-    
-    # Page setup: A4 Landscape with compact margins to guarantee single-page fit
-    section = doc.sections[0]
-    section.orientation = WD_ORIENT.LANDSCAPE
-    section.page_width = Inches(11.69)
-    section.page_height = Inches(8.27)
-    section.top_margin = Inches(0.3)
-    section.bottom_margin = Inches(0.28)
-    section.left_margin = Inches(0.4)
-    section.right_margin = Inches(0.4)
-
-    # 1. Header (Strictly matching Ministry emblem & texts)
-    build_header(doc, emblem_path)
-
-    # 2. Document Title
+def build_doc_title(doc):
     p_title = doc.add_paragraph()
     make_paragraph_rtl(p_title, align=WD_ALIGN_PARAGRAPH.CENTER)
     p_title.paragraph_format.space_before = Pt(1)
@@ -178,7 +162,7 @@ def generate_palestine_lesson_docx(data, output_path, emblem_path="palestine_emb
     r_t = p_title.add_run("نموذج إعداد الدروس اليومية")
     make_run_rtl(r_t, font_name="Arial", size_pt=12.5, bold=True)
 
-    # 3. Subheader Table: الفصل الدراسي (أقصى اليمين)، الصف، المبحث، المعلم (أقصى اليسار)
+def build_subheader(doc, data):
     semester_val = data.get('semester', 'الفصل الأول') or 'الفصل الأول'
     grade_val = data.get('grade', '..................')
     subj_val = data.get('subject', '..................')
@@ -247,28 +231,33 @@ def generate_palestine_lesson_docx(data, output_path, emblem_path="palestine_emb
             )
             tcPr.append(tcBorders)
 
-    # 4. Main Table (6 columns) - Strictly RTL
-    headers = [
-        "اليوم/التاريخ",
-        "عنوان الدرس",
-        "نتاج التعلم",
-        "الإجراءات والأنشطة",
-        "التقويم",
-        "ملاحظات"
-    ]
-    
-    col_widths = [
-        Inches(1.2),  # اليوم/التاريخ
-        Inches(1.5),  # عنوان الدرس
-        Inches(2.2),  # نتاج التعلم
-        Inches(3.2),  # الإجراءات والأنشطة
-        Inches(1.6),  # التقويم
-        Inches(1.19)  # ملاحظات
-    ]
+    # Small spacing before table
+    p_space = doc.add_paragraph()
+    p_space.paragraph_format.space_before = Pt(0)
+    p_space.paragraph_format.space_after = Pt(2)
+    r_sp = p_space.add_run()
+    r_sp.font.size = Pt(2)
 
-    lessons = data.get('lessons', [])
-    num_rows = 1 + max(len(lessons), 1)
-    tbl = doc.add_table(rows=num_rows, cols=6)
+TABLE_HEADERS = [
+    "اليوم/التاريخ",
+    "عنوان الدرس",
+    "نتاج التعلم",
+    "الإجراءات والأنشطة",
+    "التقويم",
+    "ملاحظات"
+]
+
+COL_WIDTHS = [
+    Inches(1.2),  # اليوم/التاريخ
+    Inches(1.5),  # عنوان الدرس
+    Inches(2.2),  # نتاج التعلم
+    Inches(3.2),  # الإجراءات والأنشطة
+    Inches(1.6),  # التقويم
+    Inches(1.19)  # ملاحظات
+]
+
+def create_table_structure(doc, num_data_rows=1):
+    tbl = doc.add_table(rows=1 + num_data_rows, cols=6)
     tbl.autofit = False
 
     # Force Table visual RTL & Center on Page
@@ -278,8 +267,8 @@ def generate_palestine_lesson_docx(data, output_path, emblem_path="palestine_emb
 
     # Header Row
     hdr_cells = tbl.rows[0].cells
-    for i, title in enumerate(headers):
-        hdr_cells[i].width = col_widths[i]
+    for i, title in enumerate(TABLE_HEADERS):
+        hdr_cells[i].width = COL_WIDTHS[i]
         set_cell_margins(hdr_cells[i], top=50, bottom=50, left=50, right=50)
         set_cell_background(hdr_cells[i], "EBEFF2")
         set_cell_borders(hdr_cells[i], color="000000", sz="5", val="single")
@@ -292,36 +281,84 @@ def generate_palestine_lesson_docx(data, output_path, emblem_path="palestine_emb
         run = p.add_run(title)
         make_run_rtl(run, font_name="Arial", size_pt=9.5, bold=True)
 
-    # Populate Data Rows
-    for row_idx, lesson in enumerate(lessons, start=1):
-        row = tbl.rows[row_idx]
-        row_cells = row.cells
-        for col_idx in range(6):
-            row_cells[col_idx].width = col_widths[col_idx]
-            set_cell_margins(row_cells[col_idx], top=40, bottom=40, left=50, right=50)
-            set_cell_borders(row_cells[col_idx], color="000000", sz="4", val="single")
-        
-        # Col 0: اليوم/التاريخ - توسيط عمودي وأفقي تام
-        row_cells[0].vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
-        populate_cell_paragraphs(row_cells[0], lesson.get('day_date', ''), size_pt=8.5, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True)
+    return tbl
 
-        # Col 1: عنوان الدرس - توسيط عمودي وأفقي تام
-        row_cells[1].vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
-        populate_cell_paragraphs(row_cells[1], lesson.get('title', ''), size_pt=8.5, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True)
+def populate_data_row(tbl, row_idx, lesson):
+    row = tbl.rows[row_idx]
+    row_cells = row.cells
+    for col_idx in range(6):
+        row_cells[col_idx].width = COL_WIDTHS[col_idx]
+        set_cell_margins(row_cells[col_idx], top=40, bottom=40, left=50, right=50)
+        set_cell_borders(row_cells[col_idx], color="000000", sz="4", val="single")
+    
+    # Col 0: اليوم/التاريخ - توسيط عمودي وأفقي تام
+    row_cells[0].vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+    populate_cell_paragraphs(row_cells[0], lesson.get('day_date', ''), size_pt=8.5, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True)
 
-        # Col 2: نتاج التعلم - محاذاة يمين صارمة سطر بسطر
-        populate_cell_paragraphs(row_cells[2], lesson.get('outcomes', ''), size_pt=8, align=WD_ALIGN_PARAGRAPH.RIGHT, bold=False)
+    # Col 1: عنوان الدرس - توسيط عمودي وأفقي تام
+    row_cells[1].vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+    populate_cell_paragraphs(row_cells[1], lesson.get('title', ''), size_pt=8.5, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True)
 
-        # Col 3: الإجراءات والأنشطة - محاذاة يمين صارمة سطر بسطر
-        populate_cell_paragraphs(row_cells[3], lesson.get('procedures', ''), size_pt=8, align=WD_ALIGN_PARAGRAPH.RIGHT, bold=False)
+    # Col 2: نتاج التعلم - محاذاة يمين صارمة سطر بسطر
+    populate_cell_paragraphs(row_cells[2], lesson.get('outcomes', ''), size_pt=8, align=WD_ALIGN_PARAGRAPH.RIGHT, bold=False)
 
-        # Col 4: التقويم - محاذاة يمين صارمة سطر بسطر
-        populate_cell_paragraphs(row_cells[4], lesson.get('assessment', ''), size_pt=8, align=WD_ALIGN_PARAGRAPH.RIGHT, bold=False)
+    # Col 3: الإجراءات والأنشطة - محاذاة يمين صارمة سطر بسطر
+    populate_cell_paragraphs(row_cells[3], lesson.get('procedures', ''), size_pt=8, align=WD_ALIGN_PARAGRAPH.RIGHT, bold=False)
 
-        # Col 5: ملاحظات (فارغة دائماً لملاحظات وتأملات المعلم اليدوية بالقلم)
-        p5 = row_cells[5].paragraphs[0]
-        p5.text = ""
-        make_paragraph_rtl(p5, align=WD_ALIGN_PARAGRAPH.RIGHT)
+    # Col 4: التقويم - محاذاة يمين صارمة سطر بسطر
+    populate_cell_paragraphs(row_cells[4], lesson.get('assessment', ''), size_pt=8, align=WD_ALIGN_PARAGRAPH.RIGHT, bold=False)
+
+    # Col 5: ملاحظات (فارغة دائماً لملاحظات وتأملات المعلم اليدوية بالقلم)
+    p5 = row_cells[5].paragraphs[0]
+    p5.text = ""
+    make_paragraph_rtl(p5, align=WD_ALIGN_PARAGRAPH.RIGHT)
+
+def generate_palestine_lesson_docx(data, output_path, emblem_path="palestine_emblem_trans.png"):
+    doc = docx.Document()
+    
+    # Page setup: A4 Landscape with compact margins to guarantee single-page fit
+    section = doc.sections[0]
+    section.orientation = WD_ORIENT.LANDSCAPE
+    section.page_width = Inches(11.69)
+    section.page_height = Inches(8.27)
+    section.top_margin = Inches(0.3)
+    section.bottom_margin = Inches(0.28)
+    section.left_margin = Inches(0.4)
+    section.right_margin = Inches(0.4)
+
+    lessons = data.get('lessons', [])
+    if not lessons:
+        lessons = [{}]
+
+    multi_period_mode = data.get("multi_period_mode", "separate_pages")
+
+    if multi_period_mode == "separate_pages" and len(lessons) > 1:
+        # Build a separate, standalone official lesson plan on its own page for each period!
+        for idx, lesson in enumerate(lessons):
+            if idx > 0:
+                p_br = doc.add_paragraph()
+                p_br.paragraph_format.space_before = Pt(0)
+                p_br.paragraph_format.space_after = Pt(0)
+                p_br.paragraph_format.line_spacing = Pt(0)
+                r_br = p_br.add_run()
+                r_br.font.size = Pt(1)
+                r_br.add_break(docx.enum.text.WD_BREAK.PAGE)
+            
+            build_header(doc, emblem_path)
+            build_doc_title(doc)
+            build_subheader(doc, data)
+            
+            tbl = create_table_structure(doc, num_data_rows=1)
+            populate_data_row(tbl, 1, lesson)
+    else:
+        # Single continuous table with one shared header
+        build_header(doc, emblem_path)
+        build_doc_title(doc)
+        build_subheader(doc, data)
+
+        tbl = create_table_structure(doc, num_data_rows=len(lessons))
+        for idx, lesson in enumerate(lessons, start=1):
+            populate_data_row(tbl, idx, lesson)
 
     # Save document
     doc.save(output_path)
