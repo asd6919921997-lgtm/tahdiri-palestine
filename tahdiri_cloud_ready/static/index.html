@@ -250,6 +250,33 @@
           <input type="hidden" id="periodInput" name="periods_mode" value="auto">
         </div>
 
+        <!-- Multi-period Layout Option -->
+        <div id="multiPeriodSection" class="p-4 bg-slate-50/90 rounded-2xl border border-slate-200/90 space-y-2">
+          <label class="block text-xs font-bold text-slate-700 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="layers" class="w-4 h-4 text-brand-600"></i>
+              <span>تنسيق استمارة التحضير عند اختيار أكثر من حصة (Word / PDF):</span>
+            </span>
+            <span class="text-[10px] text-brand-700 bg-brand-50 border border-brand-200 px-2 py-0.5 rounded-full font-bold">معايير الوزارة</span>
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <label class="flex items-start gap-2.5 p-3 rounded-xl border border-brand-500 bg-brand-50/40 cursor-pointer hover:bg-brand-50 transition">
+              <input type="radio" name="multi_period_mode" value="separate_pages" checked class="mt-0.5 text-brand-600 focus:ring-brand-500">
+              <div>
+                <div class="font-bold text-xs text-slate-800">ترويسة وخطة مستقلة لكل حصة (موصى به)</div>
+                <div class="text-[11px] text-slate-500 leading-snug">استمارة رسمية كاملة بشعار الوزارة وجدول منفصل لكل حصة في صفحة مستقلة كاملة.</div>
+              </div>
+            </label>
+            <label class="flex items-start gap-2.5 p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer transition">
+              <input type="radio" name="multi_period_mode" value="single_table" class="mt-0.5 text-brand-600 focus:ring-brand-500">
+              <div>
+                <div class="font-bold text-xs text-slate-800">جدول مشترك متصل بترويسة واحدة</div>
+                <div class="text-[11px] text-slate-500 leading-snug">ترويسة واحدة في بداية الملف وتتوالى صفوف الحصص داخل نفس الجدول.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
         <!-- 3. Upload Images or PDF Book -->
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-2 flex items-center justify-between">
@@ -387,58 +414,40 @@
       <!-- Live Editable Official Palestinian Table -->
       <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-sm overflow-hidden">
         
-        <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-4 mb-6 gap-3">
           <div class="flex items-center gap-2">
             <i data-lucide="table" class="w-5 h-5 text-brand-700"></i>
             <h4 class="font-extrabold text-base text-slate-800">معاينة استمارة الوزارة الرسمية (قابلة للتعديل الحي)</h4>
           </div>
-          <button id="saveEditsBtn" class="text-xs font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 px-3.5 py-1.5 rounded-lg border border-brand-200 transition flex items-center gap-1.5">
-            <i data-lucide="save" class="w-3.5 h-3.5"></i>
-            <span>تحديث الملفات بعد التعديل</span>
-          </button>
-        </div>
-
-        <!-- Official Header Preview -->
-        <div class="border border-slate-300 rounded-xl p-4 bg-white mb-6">
-          <div class="grid grid-cols-3 items-center text-center text-xs pb-2 border-b-4 border-double border-slate-900">
-            <div class="text-left font-bold text-slate-800 leading-tight" dir="ltr">
-              State of Palestine<br>Ministry of Education & Higher<br>Education
-            </div>
-            <div class="flex justify-center">
-              <img src="palestine_emblem_trans.png" alt="شعار فلسطين" class="h-12 w-auto object-contain">
-            </div>
-            <div class="text-right font-bold text-slate-800 leading-tight">
-              دولة فلسطين<br>وزارة التربية والتعليم العالي
-            </div>
-          </div>
-          <div class="text-center font-extrabold text-sm sm:text-base text-slate-900 pt-3 pb-2">
-            نموذج إعداد الدروس اليومية
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-4 items-center text-xs font-bold text-slate-700 px-2 pt-2 border-t border-slate-100 gap-2">
-            <div class="text-right">الفصل الدراسي: <span id="previewSemester" class="text-brand-800">الفصل الأول</span></div>
-            <div class="text-right">الصف: <span id="previewGrade" class="text-brand-800"></span></div>
-            <div class="text-right">المبحث: <span id="previewSubject" class="text-brand-800"></span></div>
-            <div class="text-left sm:text-right">المعلم/ـة: <span id="previewTeacher" class="text-brand-800"></span></div>
+          <div class="flex items-center gap-2">
+            <button id="saveEditsBtn" class="text-xs font-bold text-white bg-brand-700 hover:bg-brand-800 px-4 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5">
+              <i data-lucide="save" class="w-3.5 h-3.5"></i>
+              <span>تحديث وحفظ التعديلات في الملفات</span>
+            </button>
           </div>
         </div>
 
-        <!-- Table Container -->
-        <div class="overflow-x-auto custom-scroll border border-slate-300 rounded-xl">
-          <table class="w-full text-right border-collapse text-xs">
-            <thead>
-              <tr class="bg-slate-100 text-slate-800 font-extrabold border-b border-slate-300 text-center">
-                <th class="p-3 border-l border-slate-300 w-28">اليوم/التاريخ</th>
-                <th class="p-3 border-l border-slate-300 w-36">عنوان الدرس</th>
-                <th class="p-3 border-l border-slate-300 w-56">نتاج التعلم</th>
-                <th class="p-3 border-l border-slate-300 min-w-[280px]">الإجراءات والأنشطة</th>
-                <th class="p-3 border-l border-slate-300 w-44">التقويم</th>
-                <th class="p-3 w-32">ملاحظات</th>
-              </tr>
-            </thead>
-            <tbody id="previewTableBody">
-              <!-- Dynamically populated rows -->
-            </tbody>
-          </table>
+        <!-- Mode switcher for multi-period results -->
+        <div id="previewMultiModeBox" class="hidden mb-6 p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="layers" class="w-4 h-4 text-brand-600"></i>
+            <span class="text-xs font-bold text-slate-800">تنسيق ترويسة الحصص في ملفات Word و PDF:</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
+              <input type="radio" name="preview_multi_mode" value="separate_pages" id="modeSeparate" class="text-brand-600 focus:ring-brand-500">
+              <span>ترويسة واستمارة مستقلة لكل حصة (موصى به)</span>
+            </label>
+            <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
+              <input type="radio" name="preview_multi_mode" value="single_table" id="modeSingle" class="text-brand-600 focus:ring-brand-500">
+              <span>جدول مشترك متصل بترويسة واحدة</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Plans Preview Dynamic Container -->
+        <div id="plansPreviewContainer" class="space-y-6">
+          <!-- Populated by JavaScript -->
         </div>
 
         <!-- Footer note -->
@@ -769,45 +778,187 @@
         pdfBtn.classList.add('opacity-50', 'pointer-events-none');
       }
 
-      document.getElementById('previewSemester').textContent = currentPlanData.semester || 'الفصل الأول';
-      document.getElementById('previewSubject').textContent = currentPlanData.subject;
-      document.getElementById('previewGrade').textContent = currentPlanData.grade;
-      document.getElementById('previewTeacher').textContent = currentPlanData.teacher_name || '..................';
+      // Check if multi periods
+      const multiBox = document.getElementById('previewMultiModeBox');
+      if (currentPlanData.lessons && currentPlanData.lessons.length > 1) {
+        multiBox.classList.remove('hidden');
+        const mode = currentPlanData.multi_period_mode || 'separate_pages';
+        const radio = document.querySelector(`input[name="preview_multi_mode"][value="${mode}"]`);
+        if (radio) radio.checked = true;
+      } else {
+        multiBox.classList.add('hidden');
+      }
 
-      // Render table rows
+      // Hook change listener for preview mode switch
+      document.querySelectorAll('input[name="preview_multi_mode"]').forEach(radio => {
+        radio.onchange = () => {
+          currentPlanData.multi_period_mode = radio.value;
+          renderPreviewRows();
+          handleSaveEdits();
+        };
+      });
+
+      // Render preview
       renderPreviewRows();
       lucide.createIcons();
     }
 
     function renderPreviewRows() {
-      const tbody = document.getElementById('previewTableBody');
-      tbody.innerHTML = '';
+      const container = document.getElementById('plansPreviewContainer');
+      container.innerHTML = '';
 
-      currentPlanData.lessons.forEach((les, idx) => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-slate-300 hover:bg-slate-50/80 transition';
-        tr.innerHTML = `
-          <td class="p-3 border-l border-slate-300 text-center align-middle font-bold text-slate-700 bg-slate-50/50">
-            <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="day_date" data-idx="${idx}">${les.day_date}</div>
-          </td>
-          <td class="p-3 border-l border-slate-300 text-center align-middle font-bold text-slate-800">
-            <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="title" data-idx="${idx}">${les.title}</div>
-          </td>
-          <td class="p-3 border-l border-slate-300 text-right align-top text-slate-700 whitespace-pre-line leading-relaxed" dir="rtl">
-            <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="outcomes" data-idx="${idx}">${les.outcomes}</div>
-          </td>
-          <td class="p-3 border-l border-slate-300 text-right align-top text-slate-700 whitespace-pre-line leading-relaxed" dir="rtl">
-            <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="procedures" data-idx="${idx}">${les.procedures}</div>
-          </td>
-          <td class="p-3 border-l border-slate-300 text-right align-top text-slate-700 whitespace-pre-line leading-relaxed" dir="rtl">
-            <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="assessment" data-idx="${idx}">${les.assessment}</div>
-          </td>
-          <td class="p-3 text-right align-top text-slate-600" dir="rtl">
-            <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded min-h-[50px] text-[11px]" data-field="notes" data-idx="${idx}">${les.notes || ''}</div>
-          </td>
+      const isSeparate = (currentPlanData.multi_period_mode !== 'single_table') && (currentPlanData.lessons && currentPlanData.lessons.length > 1);
+
+      if (isSeparate) {
+        currentPlanData.lessons.forEach((les, idx) => {
+          const card = document.createElement('div');
+          card.className = 'border border-slate-300 rounded-2xl p-5 bg-white shadow-sm space-y-4';
+          card.innerHTML = `
+            <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+              <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-brand-100 text-brand-800 font-bold text-xs">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                <span>استمارة الحصة ${idx + 1} من ${currentPlanData.lessons.length} (صفحة رسمية مستقلة)</span>
+              </div>
+              <span class="text-[11px] text-slate-500 font-medium">نموذج وزاري متكامل</span>
+            </div>
+
+            <!-- Official Header -->
+            <div class="grid grid-cols-3 items-center text-center text-xs pb-2 border-b-4 border-double border-slate-900">
+              <div class="text-left font-bold text-slate-800 leading-tight" dir="ltr">
+                State of Palestine<br>Ministry of Education & Higher<br>Education
+              </div>
+              <div class="flex justify-center">
+                <img src="palestine_emblem_trans.png" alt="شعار فلسطين" class="h-12 w-auto object-contain">
+              </div>
+              <div class="text-right font-bold text-slate-800 leading-tight">
+                دولة فلسطين<br>وزارة التربية والتعليم العالي
+              </div>
+            </div>
+            <div class="text-center font-extrabold text-sm sm:text-base text-slate-900 pt-2 pb-1">
+              نموذج إعداد الدروس اليومية
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 items-center text-xs font-bold text-slate-700 px-2 pt-1 border-t border-slate-100 gap-2">
+              <div class="text-right">الفصل الدراسي: <span class="text-brand-800">${currentPlanData.semester || 'الفصل الأول'}</span></div>
+              <div class="text-right">الصف: <span class="text-brand-800">${currentPlanData.grade}</span></div>
+              <div class="text-right">المبحث: <span class="text-brand-800">${currentPlanData.subject}</span></div>
+              <div class="text-left sm:text-right">المعلم/ـة: <span class="text-brand-800">${currentPlanData.teacher_name || '..................'}</span></div>
+            </div>
+
+            <!-- Table for this single period -->
+            <div class="overflow-x-auto custom-scroll border border-slate-300 rounded-xl mt-3">
+              <table class="w-full text-right border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-100 text-slate-800 font-extrabold border-b border-slate-300 text-center">
+                    <th class="p-3 border-l border-slate-300 w-28">اليوم/التاريخ</th>
+                    <th class="p-3 border-l border-slate-300 w-36">عنوان الدرس</th>
+                    <th class="p-3 border-l border-slate-300 w-56">نتاج التعلم</th>
+                    <th class="p-3 border-l border-slate-300 min-w-[280px]">الإجراءات والأنشطة</th>
+                    <th class="p-3 border-l border-slate-300 w-44">التقويم</th>
+                    <th class="p-3 w-32">ملاحظات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b border-slate-300 hover:bg-slate-50/80 transition">
+                    <td class="p-3 border-l border-slate-300 text-center align-middle font-bold text-slate-700 bg-slate-50/50">
+                      <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="day_date" data-idx="${idx}">${les.day_date}</div>
+                    </td>
+                    <td class="p-3 border-l border-slate-300 text-center align-middle font-bold text-slate-800">
+                      <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="title" data-idx="${idx}">${les.title}</div>
+                    </td>
+                    <td class="p-3 border-l border-slate-300 text-right align-top text-slate-700 whitespace-pre-line leading-relaxed" dir="rtl">
+                      <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="outcomes" data-idx="${idx}">${les.outcomes}</div>
+                    </td>
+                    <td class="p-3 border-l border-slate-300 text-right align-top text-slate-700 whitespace-pre-line leading-relaxed" dir="rtl">
+                      <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="procedures" data-idx="${idx}">${les.procedures}</div>
+                    </td>
+                    <td class="p-3 border-l border-slate-300 text-right align-top text-slate-700 whitespace-pre-line leading-relaxed" dir="rtl">
+                      <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="assessment" data-idx="${idx}">${les.assessment}</div>
+                    </td>
+                    <td class="p-3 text-right align-top text-slate-600" dir="rtl">
+                      <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded min-h-[50px] text-[11px]" data-field="notes" data-idx="${idx}">${les.notes || ''}</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } else {
+        // Single continuous table
+        const card = document.createElement('div');
+        card.className = 'border border-slate-300 rounded-2xl p-5 bg-white shadow-sm space-y-4';
+        card.innerHTML = `
+          <!-- Official Header -->
+          <div class="grid grid-cols-3 items-center text-center text-xs pb-2 border-b-4 border-double border-slate-900">
+            <div class="text-left font-bold text-slate-800 leading-tight" dir="ltr">
+              State of Palestine<br>Ministry of Education & Higher<br>Education
+            </div>
+            <div class="flex justify-center">
+              <img src="palestine_emblem_trans.png" alt="شعار فلسطين" class="h-12 w-auto object-contain">
+            </div>
+            <div class="text-right font-bold text-slate-800 leading-tight">
+              دولة فلسطين<br>وزارة التربية والتعليم العالي
+            </div>
+          </div>
+          <div class="text-center font-extrabold text-sm sm:text-base text-slate-900 pt-2 pb-1">
+            نموذج إعداد الدروس اليومية
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 items-center text-xs font-bold text-slate-700 px-2 pt-1 border-t border-slate-100 gap-2">
+            <div class="text-right">الفصل الدراسي: <span class="text-brand-800">${currentPlanData.semester || 'الفصل الأول'}</span></div>
+            <div class="text-right">الصف: <span class="text-brand-800">${currentPlanData.grade}</span></div>
+            <div class="text-right">المبحث: <span class="text-brand-800">${currentPlanData.subject}</span></div>
+            <div class="text-left sm:text-right">المعلم/ـة: <span class="text-brand-800">${currentPlanData.teacher_name || '..................'}</span></div>
+          </div>
+
+          <!-- Main Continuous Table -->
+          <div class="overflow-x-auto custom-scroll border border-slate-300 rounded-xl mt-3">
+            <table class="w-full text-right border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 text-slate-800 font-extrabold border-b border-slate-300 text-center">
+                  <th class="p-3 border-l border-slate-300 w-28">اليوم/التاريخ</th>
+                  <th class="p-3 border-l border-slate-300 w-36">عنوان الدرس</th>
+                  <th class="p-3 border-l border-slate-300 w-56">نتاج التعلم</th>
+                  <th class="p-3 border-l border-slate-300 min-w-[280px]">الإجراءات والأنشطة</th>
+                  <th class="p-3 border-l border-slate-300 w-44">التقويم</th>
+                  <th class="p-3 w-32">ملاحظات</th>
+                </tr>
+              </thead>
+              <tbody id="previewSingleTableBody">
+              </tbody>
+            </table>
+          </div>
         `;
-        tbody.appendChild(tr);
-      });
+        container.appendChild(card);
+
+        const tbody = card.querySelector('#previewSingleTableBody');
+        currentPlanData.lessons.forEach((les, idx) => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-b border-slate-300 hover:bg-slate-50/80 transition';
+          tr.innerHTML = `
+            <td class="p-3 border-l border-slate-300 text-center align-middle font-bold text-slate-700 bg-slate-50/50">
+              <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="day_date" data-idx="${idx}">${les.day_date}</div>
+            </td>
+            <td class="p-3 border-l border-slate-300 text-center align-middle font-bold text-slate-800">
+              <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="title" data-idx="${idx}">${les.title}</div>
+            </td>
+            <td class="p-3 border-l border-slate-300 text-right align-top text-slate-700 whitespace-pre-line leading-relaxed" dir="rtl">
+              <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="outcomes" data-idx="${idx}">${les.outcomes}</div>
+            </td>
+            <td class="p-3 border-l border-slate-300 text-right align-top text-slate-700 whitespace-pre-line leading-relaxed" dir="rtl">
+              <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="procedures" data-idx="${idx}">${les.procedures}</div>
+            </td>
+            <td class="p-3 border-l border-slate-300 text-right align-top text-slate-700 whitespace-pre-line leading-relaxed" dir="rtl">
+              <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded" data-field="assessment" data-idx="${idx}">${les.assessment}</div>
+            </td>
+            <td class="p-3 text-right align-top text-slate-600" dir="rtl">
+              <div contenteditable="true" class="outline-none focus:bg-amber-50 p-1 rounded min-h-[50px] text-[11px]" data-field="notes" data-idx="${idx}">${les.notes || ''}</div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+      lucide.createIcons();
     }
 
     async function handleSaveEdits() {
@@ -816,12 +967,19 @@
       editableDivs.forEach(div => {
         const idx = parseInt(div.dataset.idx);
         const field = div.dataset.field;
-        currentPlanData.lessons[idx][field] = div.innerText.trim();
+        if (!isNaN(idx) && field && currentPlanData.lessons && currentPlanData.lessons[idx]) {
+          currentPlanData.lessons[idx][field] = div.innerText.trim();
+        }
       });
+
+      const selectedMode = document.querySelector('input[name="preview_multi_mode"]:checked')?.value;
+      if (selectedMode) {
+        currentPlanData.multi_period_mode = selectedMode;
+      }
 
       const btn = document.getElementById('saveEditsBtn');
       const oldHtml = btn.innerHTML;
-      btn.innerHTML = '<span>جاري التحديث...</span>';
+      btn.innerHTML = '<span>جاري التحديث والتصدير...</span>';
       btn.disabled = true;
 
       try {
@@ -835,7 +993,13 @@
         });
         const json = await res.json();
         if (json.success) {
-          btn.innerHTML = '<span>تم التحديث بنجاح!</span>';
+          if (json.docx_url) document.getElementById('downloadDocxBtn').href = `${API_BASE}${json.docx_url}`;
+          if (json.has_pdf && json.pdf_url) {
+            const pdfBtn = document.getElementById('downloadPdfBtn');
+            pdfBtn.href = `${API_BASE}${json.pdf_url}`;
+            pdfBtn.classList.remove('opacity-50', 'pointer-events-none');
+          }
+          btn.innerHTML = '<span>✓ تم تحديث الملفات بنجاح!</span>';
           setTimeout(() => { btn.innerHTML = oldHtml; btn.disabled = false; }, 2000);
         }
       } catch (e) {
