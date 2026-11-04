@@ -109,6 +109,7 @@ async def test_key(key: str = Form("")):
 async def prepare_lesson(
     grade: str = Form(...),
     subject: str = Form(...),
+    semester: str = Form("الفصل الأول"),
     periods_mode: str = Form("auto"),
     teacher_name: str = Form(""),
     school_name: str = Form(""),
@@ -229,10 +230,11 @@ async def prepare_lesson(
                 "outcomes": les.get("outcomes", ""),
                 "procedures": les.get("procedures", ""),
                 "assessment": les.get("assessment", ""),
-                "notes": les.get("notes", "")
+                "notes": ""  # Always empty by default for teacher's manual reflection
             })
 
         plan_data = {
+            "semester": semester,
             "grade": grade,
             "subject": subject,
             "teacher_name": teacher_name,
